@@ -1,0 +1,28 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.neighbors import KNeighborsClassifier
+
+np.random.seed(42)
+X = np.random.rand(100, 1)
+
+y = np.where(X[:50] <= 0.5, 1, 2)
+
+X_train, X_test = X[:50], X[50:]
+
+k_values = [1, 2, 3, 4, 5, 20, 30]
+
+plt.figure(figsize=(10, 5))
+plt.scatter(X_train, y, color='blue', label='Train')
+
+for k in k_values:
+    model = KNeighborsClassifier(n_neighbors=k)
+    model.fit(X_train, y)
+    y_pred = model.predict(X_test)
+    print(f"k={k}: {y_pred.tolist()}")
+    plt.scatter(X_test, y_pred, label=f'k={k}', alpha=0.6)
+
+plt.xlabel("X")
+plt.ylabel("Label")
+plt.title("k-NN Classification")
+plt.legend()
+plt.show()
