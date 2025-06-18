@@ -1,0 +1,23 @@
+#lab1
+import numpy as np   
+import matplotlib.pyplot as plt  
+from sklearn.datasets import fetch_openml  
+from sklearn.model_selection import train_test_split  
+from sklearn.linear_model import LinearRegression   
+boston = fetch_openml(name="boston", version=1, as_frame=True)  
+X = boston.data[["RM"]].astype(float)
+y = boston.target.astype(float)   
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)   
+model = LinearRegression()  
+model.fit(X_train, y_train)   
+y_pred = model.predict(X_test)   
+sorted_indices = X_test.values.flatten().argsort()  
+X_sorted = X_test.values.flatten()[sorted_indices]  
+y_pred_sorted = y_pred[sorted_indices]  
+plt.scatter(X_test, y_test, color="blue", alpha=0.6, label="Actual Data")  
+plt.plot(X_sorted, y_pred_sorted, color="red", linewidth=2, label="Prediction Line")  
+plt.xlabel("Average Number of Rooms (RM)")  
+plt.ylabel("House Price (in $1000s)")  
+plt.title("Linear Regression: RM vs House Price") 
+plt.legend()  
+plt.show()
