@@ -1,0 +1,66 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import requests
+import pandas as pd
+from io import BytesIO
+from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader, TensorDataset
+
+# Load and preprocess data
+url = "https://www.openml.org/data/get_csv/52667/mnist_784.arff"
+df = pd.read_csv(BytesIO(requests.get(url).content))
+
+X = torch.tensor(df.iloc[:, :-1].values / 255.0, dtype=torch.float32)
+y = torch.tensor(df.iloc[:, -1].values, dtype=torch.long)
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, stratify=y, random_state=42)
+
+train_loader = DataLoader(TensorDataset(X_train, y_train), batch_size=64, shuffle=True)
+test_loader = DataLoader(TensorDataset(X_test, y_test), batch_size=64)
+
+# Define the MLP model
+class MLP(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(784, 256), nn.BatchNorm1d(256), nn.ReLU(), nn.Dropout(0.3),
+            nn.Linear(256, 128), nn.BatchNorm1d(128), nn.ReLU(), nn.Dropout(0.3),
+            nn.Linear(128, 64),  nn.BatchNorm1d(64),  nn.ReLU(), nn.Dropout(0.3),
+            nn.Linear(64, 32),   nn.BatchNorm1d(32),  nn.ReLU(), nn.Dropout(0.3),
+            nn.Linear(32, 10)
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+# Training setup
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = MLP().to(device)
+loss_fn = nn.CrossEntropyLoss()
+opt = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-4)
+
+# Training loop
+for epoch in range(5):
+    model.train()
+    for xb, yb in train_loader:
+        xb, yb = xb.to(device), yb.to(device)
+        opt.zero_grad()
+        loss = loss_fn(model(xb), yb)
+        loss.backward()
+        opt.step()
+    print(f"Epoch {epoch + 1} done.")
+
+# Evaluation
+model.eval()
+correct = 0
+total = 0
+with torch.no_grad():
+    for xb, yb in test_loader:
+        xb, yb = xb.to(device), yb.to(device)
+        preds = model(xb).argmax(1)
+        correct += (preds == yb).sum().item()
+        total += yb.size(0)
+
+print(f"Test Accuracy: {correct / total * 100:.2f}%")
