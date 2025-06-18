@@ -1,0 +1,40 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Generate dataset
+np.random.seed(42)
+X = np.linspace(-3, 3, 100)
+y = X**2 + np.random.normal(0, 1, size=X.shape)
+
+# Weight matrix function
+def weights(x0, X, tau):
+    return np.diag(np.exp(-((X - x0)**2) / (2 * tau**2)))
+
+# Locally Weighted Regression function
+def lwr(X_train, y_train, X_query, tau):
+    X_train = np.c_[np.ones(len(X_train)), X_train]  # Add bias term
+    preds = []
+    for x0 in X_query:
+        W = weights(x0, X_train[:, 1], tau)
+        theta = np.linalg.pinv(X_train.T @ W @ X_train) @ X_train.T @ W @ y_train
+        preds.append(np.array([1, x0]) @ theta)
+    return np.array(preds)
+
+# Test set
+X_test = np.linspace(-3, 3, 100)
+
+# Plot results
+plt.figure(figsize=(10, 6))
+plt.scatter(X, y, c='black', label='Data', alpha=0.5)
+
+# Try different tau values
+for tau in [0.1, 0.5, 1, 5]:
+    y_pred = lwr(X, y, X_test, tau)
+    plt.plot(X_test, y_pred, label=f'τ = {tau}')
+
+plt.title("Locally Weighted Regression")
+plt.xlabel("X")
+plt.ylabel("y")
+plt.legend()
+plt.grid()
+plt.show()
