@@ -1,0 +1,28 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+# Load and scale data
+X, y = load_iris(return_X_y=True)
+X_scaled = StandardScaler().fit_transform(X)
+
+# Apply PCA
+X_pca = PCA(n_components=2).fit_transform(X_scaled)
+
+# Plot
+colors = ['red', 'blue', 'green']
+labels = ['setosa', 'versicolor', 'virginica']
+
+plt.figure(figsize=(8, 6))
+for i, color, label in zip([0, 1, 2], colors, labels):
+    plt.scatter(X_pca[y == i, 0], X_pca[y == i, 1],
+                color=color, label=label, alpha=0.7, edgecolors='k')
+
+plt.xlabel('PC 1')
+plt.ylabel('PC 2')
+plt.title('PCA of Iris Dataset')
+plt.legend()
+plt.grid(True)
+plt.show()
